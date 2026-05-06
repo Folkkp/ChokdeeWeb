@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-gold: #FFC107;
+  --color-brand-gold-dark: #FFA000;
+  --color-brand-purple-dark: #2E1065;
+  --color-brand-purple-main: #8B5CF6;
+  --color-brand-purple-light: #F8F5FC;
+  --color-brand-purple-card: #FFFFFF;
+}
+
+:root {
+  --background: #FAFAFA; /* Light gray/white background */
+  --foreground: #1F2937; /* Very dark gray for readability */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  /* Soft gradient from white to light purple */
+  background: linear-gradient(135deg, #FFFFFF 0%, #F4F0FA 100%);
+}
+
+.glass-panel {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #FFC107, #FF9800);
+  color: white;
+  font-weight: bold;
+  border-radius: 9999px; /* full rounded */
+  box-shadow: 0 4px 14px 0 rgba(255, 152, 0, 0.39);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #8B5CF6, #4A3B69);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
