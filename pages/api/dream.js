@@ -111,12 +111,13 @@ export default async function handler(req, res) {
 
   try {
     const { data, error } = await supabase.from('dreams').select('*');
+    const normalizedDreamText = normalizeText(dreamText);
 
     if (error) {
       throw error;
     }
 
-    const matches = createDreamMatches(dreamText, data);
+    const matches = createDreamMatches(normalizedDreamText, data);
     const keywords = [];
     const interpretations = [];
     const twoDigit = new Set();
@@ -158,6 +159,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       keywords,
+      dreamText: normalizedDreamText,
       interpretations,
       luckyNumbers: {
         twoDigit: Array.from(twoDigit).slice(0, 4),

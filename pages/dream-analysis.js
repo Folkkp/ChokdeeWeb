@@ -30,6 +30,7 @@ export default function DreamAnalysis() {
       : result?.meaning
         ? [{ keyword: 'คำทำนาย', meaning: result.meaning }]
         : [];
+  const displayedDreamText = result?.dreamText || lastSearchedText;
 
   return (
     <div className="space-y-6 animate-in fade-in pb-12">
@@ -64,7 +65,7 @@ export default function DreamAnalysis() {
                 <h3 className="font-bold text-gray-900 flex flex-col gap-1 text-xl sm:flex-row sm:items-start">
                   <span>ผลทำนายความฝัน :</span>
                   <span className="text-2xl font-black text-brand-purple-main break-words">
-                    {dreamText}
+                    {displayedDreamText}
                   </span>
                 </h3>
 
@@ -88,7 +89,7 @@ export default function DreamAnalysis() {
                 </div>
 
                 <p className="text-base text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 font-medium leading-7">
-                  ตามความเชื่อโบราณ ฝันว่า {dreamText} มักจะตีเป็นเลขเด็ด{' '}
+                  ตามความเชื่อโบราณ ฝันว่า {displayedDreamText} มักจะตีเป็นเลขเด็ด{' '}
                   {result.luckyNumbers.twoDigit.join(', ')} หรือเลขซ้ำอย่าง{' '}
                   {result.luckyNumbers.threeDigit.join(', ')} ครับ
                 </p>
