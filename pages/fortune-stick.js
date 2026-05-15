@@ -1,27 +1,98 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Clover, Landmark, MapPin } from 'lucide-react';
-import {
-  fortuneTemples,
-  getFortunesForTemple,
-  getTempleById,
-} from '../lib/fortuneTempleData';
+import { supabase } from '../lib/supabase';
 
 export default function FortuneStick() {
-  const [selectedTempleId, setSelectedTempleId] = useState(fortuneTemples[0].id);
+  const [temples, setTemples] = useState([]);
+  const [fortunes, setFortunes] = useState([]);
+  const [selectedTempleId, setSelectedTempleId] = useState('');
+  const [selectedTemple, setSelectedTemple] = useState(null);
   const [shaking, setShaking] = useState(false);
   const [result, setResult] = useState(null);
+  const [loadingTemples, setLoadingTemples] = useState(true);
+  const [loadingFortunes, setLoadingFortunes] = useState(false);
+  const [setupError, setSetupError] = useState('');
 
-  const selectedTemple = useMemo(() => getTempleById(selectedTempleId), [selectedTempleId]);
-  const fortunes = useMemo(() => getFortunesForTemple(selectedTempleId), [selectedTempleId]);
+  useEffect(() => {
+    async function loadTemples() {
+      setLoadingTemples(true);
+      setSetupError('');
 
-  const handleTempleChange = (templeId) => {
+      const { data, error } = await supabase
+        .from('fortune_temples')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        setSetupError(
+          'ยังไม่พบตาราง fortune_temples ใน Supabase กรุณารัน SQL migration และ seed ข้อมูลเซียมซีแยกวัดก่อน'
+        );
+        setTemples([]);
+        setLoadingTemples(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setSetupError('ยังไม่มีข้อมูลวัดใน Supabase กรุณารัน npm run seed:temple-fortunes');
+        setTemples([]);
+        setLoadingTemples(false);
+        return;
+      }
+
+      setTemples(data);
+      setSelectedTempleId(data[0].id);
+      setSelectedTemple(data[0]);
+      setLoadingTemples(false);
+    }
+
+    loadTemples();
+  }, []);
+
+  useEffect(() => {
+    async function loadFortunes() {
+      if (!selectedTempleId) return;
+
+      setLoadingFortunes(true);
+      setResult(null);
+      setSetupError('');
+
+      const { data, error } = await supabase
+        .from('fortune_sticks')
+        .select('*')
+        .eq('temple_id', selectedTempleId)
+        .order('number', { ascending: true });
+
+      if (error) {
+        setSetupError(
+          'ยังไม่พบตาราง fortune_sticks ใน Supabase กรุณารัน SQL migration และ seed ข้อมูลเซียมซีแยกวัดก่อน'
+        );
+        setFortunes([]);
+        setLoadingFortunes(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setSetupError('วัดนี้ยังไม่มีใบเซียมซีใน Supabase กรุณารัน npm run seed:temple-fortunes');
+        setFortunes([]);
+        setLoadingFortunes(false);
+        return;
+      }
+
+      setFortunes(data);
+      setLoadingFortunes(false);
+    }
+
+    loadFortunes();
+  }, [selectedTempleId]);
+
+  const handleTempleChange = (temple) => {
     if (shaking) return;
-    setSelectedTempleId(templeId);
-    setResult(null);
+    setSelectedTempleId(temple.id);
+    setSelectedTemple(temple);
   };
 
   const handleShake = () => {
-    if (shaking) return;
+    if (shaking || loadingFortunes || fortunes.length === 0) return;
 
     setShaking(true);
     setResult(null);
@@ -32,6 +103,8 @@ export default function FortuneStick() {
       setShaking(false);
     }, 1500);
   };
+
+  const isLoading = loadingTemples || loadingFortunes;
 
   return (
     <div className="space-y-6 animate-in fade-in pb-12">
@@ -44,50 +117,62 @@ export default function FortuneStick() {
 
       <div className="mx-auto max-w-3xl">
         <div className="glass-panel p-5 md:p-6 border-t-4 border-t-brand-purple-main relative overflow-hidden">
+          {setupError && (
+            <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-medium leading-6 text-amber-900">
+              {setupError}
+            </div>
+          )}
+
           <div className="mb-6">
             <div className="mb-3 flex items-center gap-2 text-brand-purple-dark">
               <Landmark size={20} />
               <h2 className="text-lg font-bold">เลือกสถานที่ศักดิ์สิทธิ์</h2>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {fortuneTemples.map((temple) => {
-                const isSelected = temple.id === selectedTempleId;
+            {loadingTemples ? (
+              <div className="rounded-lg border border-gray-200 bg-white p-5 text-center text-sm font-semibold text-gray-500">
+                กำลังโหลดรายชื่อวัดจาก Supabase...
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {temples.map((temple) => {
+                  const isSelected = temple.id === selectedTempleId;
 
-                return (
-                  <button
-                    key={temple.id}
-                    type="button"
-                    onClick={() => handleTempleChange(temple.id)}
-                    disabled={shaking}
-                    className={`group min-h-[104px] rounded-lg border p-4 text-left transition ${
-                      isSelected
-                        ? 'border-brand-purple-main bg-brand-purple-light shadow-sm'
-                        : 'border-gray-200 bg-white hover:border-brand-purple-main hover:bg-purple-50'
-                    } ${shaking ? 'cursor-wait opacity-70' : ''}`}
-                    aria-pressed={isSelected}
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-3">
-                      <span className="font-bold leading-6 text-gray-950">{temple.name}</span>
-                      <span
-                        className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border ${
-                          isSelected
-                            ? 'border-brand-purple-main bg-brand-purple-main text-white'
-                            : 'border-gray-200 text-transparent group-hover:border-brand-purple-main'
-                        }`}
-                      >
-                        <Check size={14} />
-                      </span>
-                    </div>
-                    <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-gray-500">
-                      <MapPin size={14} />
-                      {temple.location}
-                    </div>
-                    <p className="text-sm leading-6 text-gray-600">{temple.sacredFocus}</p>
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={temple.id}
+                      type="button"
+                      onClick={() => handleTempleChange(temple)}
+                      disabled={shaking}
+                      className={`group min-h-[104px] rounded-lg border p-4 text-left transition ${
+                        isSelected
+                          ? 'border-brand-purple-main bg-brand-purple-light shadow-sm'
+                          : 'border-gray-200 bg-white hover:border-brand-purple-main hover:bg-purple-50'
+                      } ${shaking ? 'cursor-wait opacity-70' : ''}`}
+                      aria-pressed={isSelected}
+                    >
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <span className="font-bold leading-6 text-gray-950">{temple.name}</span>
+                        <span
+                          className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border ${
+                            isSelected
+                              ? 'border-brand-purple-main bg-brand-purple-main text-white'
+                              : 'border-gray-200 text-transparent group-hover:border-brand-purple-main'
+                          }`}
+                        >
+                          <Check size={14} />
+                        </span>
+                      </div>
+                      <div className="mb-2 flex items-center gap-1 text-xs font-semibold text-gray-500">
+                        <MapPin size={14} />
+                        {temple.location}
+                      </div>
+                      <p className="text-sm leading-6 text-gray-600">{temple.sacred_focus}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl bg-brand-purple-light p-5 text-center border border-purple-100">
@@ -96,17 +181,25 @@ export default function FortuneStick() {
                 กำลังตั้งจิตถึง
               </p>
               <p className="mt-1 text-lg font-black text-brand-purple-dark">
-                {selectedTemple.name}
+                {selectedTemple?.name || 'กรุณาเลือกวัด'}
               </p>
-              <p className="mt-2 text-sm leading-6 text-gray-600">{selectedTemple.blessing}</p>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                {selectedTemple?.sacred_focus || 'ข้อมูลวัดจะถูกโหลดจาก Supabase'}
+              </p>
             </div>
 
             <button
               onClick={handleShake}
-              disabled={shaking}
-              className={`btn-primary w-full py-4 text-lg mb-8 ${shaking ? 'opacity-50 cursor-wait' : ''}`}
+              disabled={shaking || isLoading || fortunes.length === 0}
+              className={`btn-primary w-full py-4 text-lg mb-8 ${
+                shaking || isLoading || fortunes.length === 0 ? 'opacity-50 cursor-wait' : ''
+              }`}
             >
-              {shaking ? 'กำลังเสี่ยงเซียมซี...' : 'เสี่ยงเซียมซีโชคดี'}
+              {isLoading
+                ? 'กำลังโหลดข้อมูลเซียมซี...'
+                : shaking
+                  ? 'กำลังเสี่ยงเซียมซี...'
+                  : 'เสี่ยงเซียมซีโชคดี'}
             </button>
 
             <div className="flex flex-col items-center justify-center min-h-[180px]">
@@ -125,9 +218,9 @@ export default function FortuneStick() {
 
               {result && (
                 <div className="animate-in zoom-in w-full">
-                  <p className="text-sm font-bold text-brand-purple-main">{result.templeName}</p>
+                  <p className="text-sm font-bold text-brand-purple-main">{selectedTemple?.name}</p>
                   <h3 className="text-xl font-bold text-brand-purple-dark mt-1">
-                    ผลเซียมซี เลขที่ {result.num}
+                    ผลเซียมซี เลขที่ {result.number}
                   </h3>
                 </div>
               )}
@@ -139,13 +232,13 @@ export default function FortuneStick() {
               <div className="flex items-start text-green-600 font-bold mb-4 border-b border-gray-100 pb-3 text-lg">
                 <Clover size={24} className="mr-2 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p>เซียมซีโชคดี เลขที่ {result.num}</p>
-                  <p className="text-sm font-semibold text-gray-500">{result.templeName}</p>
+                  <p>เซียมซีโชคดี เลขที่ {result.number}</p>
+                  <p className="text-sm font-semibold text-gray-500">{selectedTemple?.name}</p>
                 </div>
               </div>
 
               <div className="flex gap-3 mb-5 flex-wrap">
-                {result.lucky.split(',').map((num, i) => (
+                {result.lucky_numbers.split(',').map((num, i) => (
                   <span
                     key={`${num}-${i}`}
                     className={`px-5 py-2 rounded text-xl font-black border-2 ${
@@ -162,13 +255,15 @@ export default function FortuneStick() {
               <p className="text-gray-900 font-bold text-lg leading-8 mb-5">{result.text}</p>
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-base text-green-900">
-                <p className="font-bold mb-2">ความหมายของเลขมงคล:</p>
-                <ul className="list-disc pl-5 space-y-1 text-green-800 font-medium">
-                  <li>
-                    เลขเด่น: <span className="font-bold">{result.lucky}</span>
-                  </li>
-                  <li>{selectedTemple.blessing}</li>
-                </ul>
+                <p className="font-bold mb-2">แหล่งข้อมูล:</p>
+                <a
+                  className="font-semibold text-green-800 underline decoration-green-300 underline-offset-4"
+                  href={result.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  อ้างอิงรายชื่อชุดเซียมซีจาก MyHora สำหรับ {selectedTemple?.name}
+                </a>
               </div>
             </div>
           )}
