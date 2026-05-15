@@ -254,17 +254,6 @@ export default function FortuneStick() {
 
               <p className="text-gray-900 font-bold text-lg leading-8 mb-5">{result.text}</p>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-base text-green-900">
-                <p className="font-bold mb-2">แหล่งข้อมูล:</p>
-                <a
-                  className="font-semibold text-green-800 underline decoration-green-300 underline-offset-4"
-                  href={result.source_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  อ้างอิงรายชื่อชุดเซียมซีจาก MyHora สำหรับ {selectedTemple?.name}
-                </a>
-              </div>
             </div>
           )}
         </div>
