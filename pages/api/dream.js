@@ -118,6 +118,7 @@ export default async function handler(req, res) {
 
     const matches = createDreamMatches(dreamText, data);
     const keywords = [];
+    const interpretations = [];
     const twoDigit = new Set();
     const threeDigit = new Set();
     let meaningText = '';
@@ -126,6 +127,10 @@ export default async function handler(req, res) {
       const dream = match.dream;
 
       keywords.push(dream.keyword);
+      interpretations.push({
+        keyword: dream.keyword,
+        meaning: dream.meaning,
+      });
       meaningText += `ฝันเห็น${dream.keyword}: ${dream.meaning} `;
 
       if (dream.lucky_numbers?.twoDigit) {
@@ -141,6 +146,10 @@ export default async function handler(req, res) {
       keywords.push('สิ่งลี้ลับ');
       meaningText =
         'ความฝันของคุณอาจบ่งบอกถึงลางสังหรณ์หรือการเปลี่ยนแปลงที่กำลังจะเกิดขึ้น';
+      interpretations.push({
+        keyword: 'สิ่งลี้ลับ',
+        meaning: meaningText,
+      });
 
       twoDigit.add(Math.floor(10 + Math.random() * 90).toString());
       twoDigit.add(Math.floor(10 + Math.random() * 90).toString());
@@ -149,6 +158,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       keywords,
+      interpretations,
       luckyNumbers: {
         twoDigit: Array.from(twoDigit).slice(0, 4),
         threeDigit: Array.from(threeDigit).slice(0, 3),

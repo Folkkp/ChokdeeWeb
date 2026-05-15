@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Moon, Sparkles, Send, Clover } from 'lucide-react';
+import { Clover, Moon } from 'lucide-react';
 
 export default function DreamAnalysis() {
   const [dreamText, setDreamText] = useState('');
@@ -24,6 +24,13 @@ export default function DreamAnalysis() {
     }
   };
 
+  const interpretations =
+    result?.interpretations?.length > 0
+      ? result.interpretations
+      : result?.meaning
+        ? [{ keyword: 'คำทำนาย', meaning: result.meaning }]
+        : [];
+
   return (
     <div className="space-y-6 animate-in fade-in pb-12">
       <div className="text-center mb-8">
@@ -31,7 +38,7 @@ export default function DreamAnalysis() {
       </div>
 
       <div className="max-w-2xl mx-auto glass-panel p-6 md:p-8 border-t-4 border-t-brand-purple-main">
-        <form onSubmit={handleSubmit} className="flex gap-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:flex-row">
           <input
             className="flex-1 bg-white border border-gray-200 rounded-lg p-3 text-gray-800 focus:outline-none focus:border-brand-purple-main focus:ring-1 focus:ring-brand-purple-main transition"
             placeholder="เช่น งูเลื้อยเข้าบ้าน..."
@@ -41,7 +48,7 @@ export default function DreamAnalysis() {
           <button
             type="submit"
             disabled={loading || !dreamText.trim() || dreamText.trim() === lastSearchedText.trim()}
-            className="btn-primary px-6 flex items-center justify-center whitespace-nowrap disabled:opacity-50"
+            className="btn-primary px-6 py-3 flex items-center justify-center whitespace-nowrap disabled:opacity-50"
           >
             {loading ? '...' : 'ดูคำทำนายเลข!'}
           </button>
@@ -54,32 +61,65 @@ export default function DreamAnalysis() {
                 <Moon className="text-brand-purple-main" size={64} />
               </div>
               <div className="w-full md:w-2/3 space-y-4">
-                <h3 className="font-bold text-gray-900 flex items-center text-xl">
-                   ผลทำนายความฝัน : <br/>
-                   <span className="text-2xl font-black text-brand-purple-main ml-2">{dreamText}</span>
+                <h3 className="font-bold text-gray-900 flex flex-col gap-1 text-xl sm:flex-row sm:items-start">
+                  <span>ผลทำนายความฝัน :</span>
+                  <span className="text-2xl font-black text-brand-purple-main break-words">
+                    {dreamText}
+                  </span>
                 </h3>
-                
+
                 <div className="flex gap-3 flex-wrap">
                   {result.luckyNumbers.twoDigit.map((num, i) => (
-                    <span key={i} className="bg-white text-gray-900 border-2 border-gray-200 px-5 py-2 rounded-full font-black text-2xl shadow-sm">{num}</span>
+                    <span
+                      key={`two-${num}-${i}`}
+                      className="bg-white text-gray-900 border-2 border-gray-200 px-5 py-2 rounded-full font-black text-2xl shadow-sm"
+                    >
+                      {num}
+                    </span>
                   ))}
                   {result.luckyNumbers.threeDigit.map((num, i) => (
-                    <span key={i} className="bg-brand-gold text-gray-900 px-5 py-2 rounded-full font-black text-2xl shadow-sm">{num}</span>
+                    <span
+                      key={`three-${num}-${i}`}
+                      className="bg-brand-gold text-gray-900 px-5 py-2 rounded-full font-black text-2xl shadow-sm"
+                    >
+                      {num}
+                    </span>
                   ))}
                 </div>
-                
-                <p className="text-base text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 font-medium">
-                  ตามความเชื่อโบราณ ฝันว่า {dreamText} มักจะตีเป็นเลขเด็ด {result.luckyNumbers.twoDigit.join(', ')} หรือเลขซ้ำอย่าง {result.luckyNumbers.threeDigit.join(', ')} ครับ
+
+                <p className="text-base text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 font-medium leading-7">
+                  ตามความเชื่อโบราณ ฝันว่า {dreamText} มักจะตีเป็นเลขเด็ด{' '}
+                  {result.luckyNumbers.twoDigit.join(', ')} หรือเลขซ้ำอย่าง{' '}
+                  {result.luckyNumbers.threeDigit.join(', ')} ครับ
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 bg-green-50 border border-green-100 rounded-lg p-4 flex items-center space-x-3">
-               <Clover className="text-green-500 flex-shrink-0" size={20} />
-               <p className="text-sm text-green-800">
-                 <span className="font-bold mr-2">คำทำนายเพิ่ม:</span> {result.meaning}
-               </p>
-            </div>
+            <section className="mt-5 rounded-lg border border-green-100 bg-green-50 p-4">
+              <div className="mb-3 flex items-center gap-2 text-green-900">
+                <Clover className="text-green-500 flex-shrink-0" size={20} />
+                <h4 className="text-sm font-bold">คำทำนายเพิ่มเติม</h4>
+              </div>
+
+              <div className="space-y-3">
+                {interpretations.map((item, index) => (
+                  <article
+                    key={`${item.keyword}-${index}`}
+                    className="rounded-lg border border-green-100 bg-white/75 p-4 shadow-sm"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-brand-purple-main px-3 py-1 text-xs font-bold text-white">
+                        ฝันเห็น
+                      </span>
+                      <span className="text-base font-black text-brand-purple-dark">
+                        {item.keyword}
+                      </span>
+                    </div>
+                    <p className="text-sm leading-7 text-green-900">{item.meaning}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
           </div>
         )}
       </div>
