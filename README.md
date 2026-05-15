@@ -38,3 +38,19 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+
+## Lottery Sync Cron
+
+Vercel Cron Jobs are configured in `vercel.json` to call `/api/sync-lottery` once per day at 17:05 Thailand time.
+
+Recommended Vercel environment variable:
+
+```bash
+CRON_SECRET=<random-string-at-least-16-characters>
+```
+
+When `CRON_SECRET` is set, Vercel automatically sends it as an `Authorization: Bearer ...` header for cron runs. For a manual production check, call:
+
+```bash
+https://chokdee-webbb.vercel.app/api/sync-lottery?secret=<CRON_SECRET>
+```

@@ -7,6 +7,17 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
+  if (process.env.CRON_SECRET) {
+    const authHeader = req.headers.authorization;
+    const querySecret = req.query.secret;
+    const isAuthorized =
+      authHeader === `Bearer ${process.env.CRON_SECRET}` || querySecret === process.env.CRON_SECRET;
+
+    if (!isAuthorized) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   try {
     // ── Step 1: Scrape latest draw from Sanook ──────────────────────────────
     let latestExternal = null;
