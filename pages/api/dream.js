@@ -40,6 +40,17 @@ function getKeywordSegments(keyword) {
   return getWordSegments(keyword).map((part) => part.segment);
 }
 
+const falsePositiveContinuations = {
+  ปลา: ['ย'],
+};
+
+function isBlockedSubstringMatch(text, keyword, start, end) {
+  const nextChar = text.slice(end, end + 1);
+  const blockedNextChars = falsePositiveContinuations[keyword] || [];
+
+  return blockedNextChars.includes(nextChar);
+}
+
 function createDreamMatches(dreamText, dreams) {
   const normalizedDreamText = normalizeText(dreamText);
   const dreamSegments = getWordSegments(normalizedDreamText);
@@ -65,6 +76,30 @@ function createDreamMatches(dreamText, dreams) {
 
       const start = dreamSegments[i].index;
       const end = dreamSegments[i + keywordSegments.length - 1].end;
+
+      candidates.push({
+        dream,
+        keyword,
+        start,
+        end,
+        score: end - start,
+      });
+    }
+
+    let searchFromIndex = 0;
+    while (searchFromIndex < normalizedDreamText.length) {
+      const start = normalizedDreamText.indexOf(keyword, searchFromIndex);
+
+      if (start === -1) {
+        break;
+      }
+
+      const end = start + keyword.length;
+      searchFromIndex = start + 1;
+
+      if (isBlockedSubstringMatch(normalizedDreamText, keyword, start, end)) {
+        continue;
+      }
 
       candidates.push({
         dream,
