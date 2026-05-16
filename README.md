@@ -41,7 +41,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/b
 
 ## Lottery Sync Cron
 
-Vercel Cron Jobs are configured in `vercel.json` to call `/api/sync-lottery` once per day at 17:05 Thailand time.
+Vercel Cron Jobs are configured in `vercel.json` to call `/api/sync-lottery` once per day at 16:30 Thailand time.
 
 Recommended Vercel environment variable:
 

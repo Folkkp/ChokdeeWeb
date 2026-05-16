@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/sync-lottery",
-      "schedule": "5 10 * * *"
+      "schedule": "30 9 * * *"
     }
   ]
 }
