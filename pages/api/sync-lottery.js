@@ -53,8 +53,25 @@ export default async function handler(req, res) {
     const dbDate = latestInDB ? normalizeDate(latestInDB.date) : null;
 
     const isNewDraw = externalDate !== dbDate;
+    const isDryRun = req.query.dryRun === 'true';
 
-    console.log(`[sync-lottery] External: "${externalDate}" | DB: "${dbDate}" | New draw: ${isNewDraw}`);
+    console.log(
+      `[sync-lottery] External: "${externalDate}" | DB: "${dbDate}" | New draw: ${isNewDraw} | Dry run: ${isDryRun}`
+    );
+
+    if (isDryRun) {
+      return res.status(200).json({
+        status: isNewDraw ? 'dry_run_new_draw' : 'dry_run_same_draw',
+        message: isNewDraw
+          ? 'Dry run only. New draw detected, but no database changes were made.'
+          : 'Dry run only. No new draw detected. No database changes were made.',
+        previousDate: dbDate,
+        latestDate: externalDate,
+        externalDraw: latestExternal,
+        databaseChanged: false,
+        resetLogs: false,
+      });
+    }
 
     if (!isNewDraw) {
       // ── Same draw: just refresh all 100 records (upsert by id) ──────────────

@@ -1,56 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# ChokDee
 
-## Getting Started
+Next.js web app for lottery result lookup, dream interpretation, fortune sticks, and number analytics.
 
-First, run the development server:
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Production
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
-
-## Lottery Sync Cron
-
-Vercel Cron Jobs are configured in `vercel.json` to call `/api/sync-lottery` once per day at 16:30 Thailand time.
-
-Recommended Vercel environment variable:
+The app is deployed on Vercel. Required environment variables:
 
 ```bash
-CRON_SECRET=<random-string-at-least-16-characters>
+NEXT_PUBLIC_SUPABASE_URL=<supabase-project-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>
+CRON_SECRET=<shared-secret-for-sync-lottery>
 ```
 
-When `CRON_SECRET` is set, Vercel automatically sends it as an `Authorization: Bearer ...` header for cron runs. For a manual production check, call:
+## Supabase Setup
+
+Main schema:
 
 ```bash
+supabase-schema.sql
+```
+
+Fortune temple migration:
+
+```bash
+supabase-fortune-temples-migration.sql
+```
+
+Seed commands:
+
+```bash
+npm run seed:dreams
+npm run seed:temple-fortunes
+```
+
+## Lottery Sync
+
+Lottery sync is scheduled by Supabase Cron, not Vercel Cron.
+
+Run `supabase-sync-lottery-cron.sql` in Supabase SQL Editor after replacing `<CRON_SECRET>` with the same `CRON_SECRET` configured in Vercel.
+
+Schedule:
+
+```text
+30 9 * * *
+```
+
+This runs every day at `16:30` Thailand time and calls:
+
+```text
+https://chokdee-webbb.vercel.app/api/sync-lottery
+```
+
+Manual production sync:
+
+```text
 https://chokdee-webbb.vercel.app/api/sync-lottery?secret=<CRON_SECRET>
+```
+
+Dry run, no database writes:
+
+```text
+https://chokdee-webbb.vercel.app/api/sync-lottery?dryRun=true&secret=<CRON_SECRET>
+```
+
+Check Supabase Cron runs:
+
+```sql
+SELECT *
+FROM cron.job_run_details
+WHERE jobid = (
+  SELECT jobid FROM cron.job WHERE jobname = 'sync-lottery-daily'
+)
+ORDER BY start_time DESC
+LIMIT 10;
 ```

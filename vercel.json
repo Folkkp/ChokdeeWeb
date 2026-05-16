@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/sync-lottery",
-      "schedule": "30 9 * * *"
-    }
-  ]
-}
